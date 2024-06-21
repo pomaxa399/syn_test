@@ -14,35 +14,35 @@ user_data: Dict[int, Dict[str, Any]] = {}
 
 
 @form_router.message(StepsForm.get_last_name)
-async def get_first_name(message: Message, state: FSMContext):
+async def get_first_name(message: Message, state: FSMContext) -> None:
     await message.answer(f'Твоя фамилия: {message.text}, теперь введи имя')
     await state.update_data(last_name=message.text)
     await state.set_state(StepsForm.get_first_name)
 
 
 @form_router.message(StepsForm.get_first_name)
-async def get_middle_name(message: Message, state: FSMContext):
+async def get_middle_name(message: Message, state: FSMContext) -> None:
     await message.answer(f'Твоё имя: {message.text}, теперь введи отчество')
     await state.update_data(first_name=message.text)
     await state.set_state(StepsForm.get_middle_name)
 
 
 @form_router.message(StepsForm.get_middle_name)
-async def get_phone_number(message: Message, state: FSMContext):
+async def get_phone_number(message: Message, state: FSMContext) -> None:
     await message.answer(f'Твоё отчество: {message.text}, теперь напиши свой номер телефона')
     await state.update_data(middle_name=message.text)
     await state.set_state(StepsForm.get_phone_number)
 
 
 @form_router.message(StepsForm.get_phone_number)
-async def get_interest(message: Message, state: FSMContext):
+async def get_interest(message: Message, state: FSMContext) -> None:
     await message.answer(f'Твой номер телефона: {message.text}, теперь выбери категорию', reply_markup=select_category)
     await state.update_data(phone_number=message.text)
     await state.set_state(StepsForm.get_interest)
 
 
 @form_router.callback_query(StepsForm.get_interest, F.data.split('_')[1] != 'other')
-async def process_interest(call: CallbackQuery, state: FSMContext, bot: Bot):
+async def process_interest(call: CallbackQuery, state: FSMContext, bot: Bot) -> None:
     data = await state.update_data(interest=call.data)
     await call.answer()
     await state.clear()
@@ -50,20 +50,20 @@ async def process_interest(call: CallbackQuery, state: FSMContext, bot: Bot):
 
 
 @form_router.callback_query(StepsForm.get_interest, F.data.split('_')[1] == 'other')
-async def get_other_interest(call: CallbackQuery, state: FSMContext):
+async def get_other_interest(call: CallbackQuery, state: FSMContext) -> None:
     await call.message.answer("Введите интересующую вас категорию:")
     await state.set_state(StepsForm.get_other_interest)
     await call.answer()
 
 
 @form_router.message(StepsForm.get_other_interest)
-async def set_other_interest(message: Message, state: FSMContext, bot: Bot):
+async def set_other_interest(message: Message, state: FSMContext, bot: Bot) -> None:
     data = await state.update_data(interest=message.text)
     await state.clear()
     await finish_survey(message=message, data=data, bot=bot)
 
 
-async def finish_survey(message: Message, data: Dict[str, Any], bot: Bot) -> user_data:
+async def finish_survey(message: Message, data: Dict[str, Any], bot: Bot) -> None:
     # Собираем данные для текущего пользователя
     current_user_data = {
         'last_name': data.get('last_name'),
@@ -85,6 +85,6 @@ async def finish_survey(message: Message, data: Dict[str, Any], bot: Bot) -> use
     await send_to_system(user_data)
 
 
-async def send_to_system(data):
+async def send_to_system(data: Dict) -> None:
     # Заглушка для отправки данных в систему
     logging.info(f"Отправка данных в систему: {data}")
