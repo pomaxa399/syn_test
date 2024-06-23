@@ -8,41 +8,55 @@ from aiogram.types import Message, CallbackQuery
 
 from core.keyboards.inline import select_category
 from core.utils.statesform import StepsForm
+from core.utils.validate_phone import validate_phone_number
 
 form_router = Router()
 
 user_data: Dict[int, Dict[str, Any]] = {}
 
 
-@form_router.message(StepsForm.get_last_name)
+@form_router.message(F.text, StepsForm.get_last_name)
 async def get_first_name(message: Message, state: FSMContext) -> None:
-    await state.update_data(last_name=message.text, user_id = message.from_user.id)
-    await message.answer(f'Твоя фамилия: {message.text}, теперь введи имя')
+    if not message.text.isalpha():
+        await message.answer('Введите фамилию корректно')
+        return
+    await state.update_data(last_name=message.text.capitalize(), user_id=message.from_user.id)
+    await message.answer('Отлично, теперь введи имя')
     await state.set_state(StepsForm.get_first_name)
 
 
-@form_router.message(StepsForm.get_first_name)
+@form_router.message(F.text, StepsForm.get_first_name)
 async def get_middle_name(message: Message, state: FSMContext) -> None:
-    await message.answer(f'Твоё имя: {message.text}, теперь введи отчество')
-    await state.update_data(first_name=message.text)
+    if not message.text.isalpha():
+        await message.answer('Введите имя корректно')
+        return
+    await state.update_data(first_name=message.text.capitalize())
+    await message.answer('Хорошо, напиши своё отчество')
     await state.set_state(StepsForm.get_middle_name)
 
 
-@form_router.message(StepsForm.get_middle_name)
+@form_router.message(F.text, StepsForm.get_middle_name)
 async def get_phone_number(message: Message, state: FSMContext) -> None:
-    await message.answer(f'Твоё отчество: {message.text}, теперь напиши свой номер телефона')
-    await state.update_data(middle_name=message.text)
+    if not message.text.isalpha():
+        await message.answer('Введите отчество корректно')
+        return
+    await message.answer('Теперь напиши свой номер телефона в формате: 79991234567')
+    await state.update_data(middle_name=message.text.capitalize())
     await state.set_state(StepsForm.get_phone_number)
 
 
-@form_router.message(StepsForm.get_phone_number)
+@form_router.message(F.text, StepsForm.get_phone_number)
 async def get_interest(message: Message, state: FSMContext) -> None:
-    await message.answer(f'Твой номер телефона: {message.text}, теперь выбери категорию', reply_markup=select_category)
-    await state.update_data(phone_number=message.text)
+    valid_phone = validate_phone_number(message.text)
+    if not valid_phone:
+        await message.reply('Пожалуйста введите правильный номер телефона')
+        return
+    await state.update_data(phone_number=valid_phone)
+    await message.answer(f'Выбери интересующую тебя категорию', reply_markup=select_category)
     await state.set_state(StepsForm.get_interest)
 
 
-@form_router.callback_query(StepsForm.get_interest)
+@form_router.callback_query(F.data, StepsForm.get_interest)
 async def process_interest(call: CallbackQuery, state: FSMContext, bot: Bot) -> None:
     if call.data.split('_')[1] != 'other':
         data = await state.update_data(interest=call.data)
@@ -54,7 +68,7 @@ async def process_interest(call: CallbackQuery, state: FSMContext, bot: Bot) -> 
     await state.set_state(StepsForm.get_interest)
 
 
-@form_router.message(StepsForm.get_interest)
+@form_router.message(F.text, StepsForm.get_interest)
 async def set_other_interest(message: Message, state: FSMContext, bot: Bot) -> None:
     data = await state.update_data(interest=message.text)
     await state.clear()
