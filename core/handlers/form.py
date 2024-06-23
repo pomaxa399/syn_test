@@ -5,6 +5,7 @@ from aiogram import Bot, Router, F
 from aiogram.fsm.context import FSMContext
 from aiogram.types import Message, CallbackQuery
 
+
 from core.keyboards.inline import select_category
 from core.utils.statesform import StepsForm
 
@@ -15,8 +16,8 @@ user_data: Dict[int, Dict[str, Any]] = {}
 
 @form_router.message(StepsForm.get_last_name)
 async def get_first_name(message: Message, state: FSMContext) -> None:
+    await state.update_data(last_name=message.text, user_id = message.from_user.id)
     await message.answer(f'Твоя фамилия: {message.text}, теперь введи имя')
-    await state.update_data(last_name=message.text)
     await state.set_state(StepsForm.get_first_name)
 
 
@@ -64,6 +65,7 @@ async def set_other_interest(message: Message, state: FSMContext, bot: Bot) -> N
 
 
 async def finish_survey(message: Message, data: Dict[str, Any], bot: Bot) -> None:
+    user_id = data.get('user_id')
     # Собираем данные для текущего пользователя
     current_user_data = {
         'last_name': data.get('last_name'),
@@ -75,14 +77,14 @@ async def finish_survey(message: Message, data: Dict[str, Any], bot: Bot) -> Non
     }
 
     # Добавляем данные текущего пользователя в user_data с ключом user_id
-    user_data[message.chat.id] = current_user_data
+    user_data[user_id] = current_user_data
 
     url = 'https://bogatyr.club/uploads/posts/2023-03/1679683330_bogatyr-club-p-laik-krasnii-foni-vkontakte-17.png'
     # Отправка изображения лайка
     await bot.send_photo(chat_id=message.chat.id, photo=url,
                          caption="Спасибо за участие в опросе!")
 
-    await send_to_system(user_data)
+    await send_to_system(user_data[user_id])
 
 
 async def send_to_system(data: Dict) -> None:

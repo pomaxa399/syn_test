@@ -7,6 +7,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
+from aiogram.fsm.storage.memory import MemoryStorage
 
 from core.handlers.basic import get_start
 from core.handlers.form import form_router
@@ -16,7 +17,7 @@ from core.utils.commands import set_command
 TOKEN = settings.bot_token
 
 
-dp = Dispatcher()
+dp = Dispatcher(storage=MemoryStorage())
 dp.message.register(get_start,CommandStart())
 dp.include_router(form_router)
 dp.include_router(news_router)
@@ -26,7 +27,6 @@ dp.include_router(news_router)
 async def on_startup(bot: Bot):
     await set_command(bot)
     await bot.send_message(settings.admin_id, text='Бот запущен!')
-
 
 
 @dp.shutdown()
