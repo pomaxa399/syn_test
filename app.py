@@ -19,8 +19,8 @@ TOKEN = settings.bot_token
 
 dp = Dispatcher(storage=MemoryStorage())
 dp.message.register(get_start,CommandStart())
-dp.include_router(form_router)
 dp.include_router(news_router)
+dp.include_router(form_router)
 
 
 @dp.startup()
