@@ -7,4 +7,3 @@ class StepsForm(StatesGroup):
     get_middle_name = State()
     get_phone_number = State()
     get_interest = State()
-    get_other_interest = State()

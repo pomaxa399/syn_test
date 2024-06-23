@@ -42,22 +42,19 @@ async def get_interest(message: Message, state: FSMContext) -> None:
     await state.set_state(StepsForm.get_interest)
 
 
-@form_router.callback_query(StepsForm.get_interest, F.data.split('_')[1] != 'other')
+@form_router.callback_query(StepsForm.get_interest)
 async def process_interest(call: CallbackQuery, state: FSMContext, bot: Bot) -> None:
-    data = await state.update_data(interest=call.data)
+    if call.data.split('_')[1] != 'other':
+        data = await state.update_data(interest=call.data)
+        await call.answer()
+        await state.clear()
+        await finish_survey(message=call.message, data=data, bot=bot)
     await call.answer()
-    await state.clear()
-    await finish_survey(message=call.message, data=data, bot=bot)
+    await call.message.answer('Введите интересующую вас категорию')
+    await state.set_state(StepsForm.get_interest)
 
 
-@form_router.callback_query(StepsForm.get_interest, F.data.split('_')[1] == 'other')
-async def get_other_interest(call: CallbackQuery, state: FSMContext) -> None:
-    await call.message.answer("Введите интересующую вас категорию:")
-    await state.set_state(StepsForm.get_other_interest)
-    await call.answer()
-
-
-@form_router.message(StepsForm.get_other_interest)
+@form_router.message(StepsForm.get_interest)
 async def set_other_interest(message: Message, state: FSMContext, bot: Bot) -> None:
     data = await state.update_data(interest=message.text)
     await state.clear()
